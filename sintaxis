@@ -1,0 +1,41 @@
+#cargar y llarmar el paquete necesario.
+install.packages("pROC")
+library("pROC")
+
+#creo las curvas sobre las que trabajaré.
+dfcor<-dfcorFSFI_1
+roc<-roc(dfcor$var_agrup_dummy,dfcor$FSFI_totalcorregido)
+roc1<-roc(dfcor$var_agrup_dummy,dfcor$FSFI_totalcorregido,smooth=TRUE)
+plot(roc)
+plot(roc1)
+auc(roc)
+coords(roc,transpose = TRUE)
+coords(roc,transpose = FALSE)
+
+#dibujamos bonita la curva.
+#insertar AUC y IC
+rocobj <- plot.roc(dfcor$var_agrup_dummy,dfcor$FSFI_totalcorregido,main="Confidence intervals", percent=TRUE,ci=TRUE,print.auc=TRUE) 
+
+#creamos objeto para plotear el IC por defecto al 95% CI. Boots Default: 2000.
+ciobj <- ci.se(rocobj, specificities=seq(0, 100, 5))
+#insertamos el IC
+plot(ciobj, type="shape", col="#1c61b6AA") # plot as a blue shape
+plot(ci(rocobj, of="thresholds", thresholds="best")) # add one threshold
+#le inserto el punto de corte sobre la gráfica con su IC
+umbral<-plot.roc(dfcor$var_agrup_dummy,dfcor$FSFI_totalcorregido, main="Confidence interval of a threshold", percent=TRUE,ci=TRUE, of="thresholds",thresholds="best",print.thres="best")
+umbral<-plot.roc(dfcor$var_agrup_dummy,dfcor$FSFI_totalcorregido, main="Confidence interval of a threshold", percent=TRUE,ci=TRUE,print.auc=TRUE, of="thresholds",thresholds="best",print.thres="best")
+plot(ciobj, type="shape", col="#1c61b6AA") # plot as a blue shape
+
+#potencia estadística de tu objeto. 
+power.roc.test(roc)
+power.roc.test(ncases=119, ncontrols=57, auc=0.85, sig.level=0.01)
+
+
+#otra cosa que nos puede interesar es comparar 2 curvas
+
+Predictor1 <- plot.roc(dfcor$var_agrup_dummy,dfcor$FSFI_totalcorregido,
+                    main="Statistical comparison", col="#1c61b6")
+Predictor2 <- lines.roc(dfcor$var_agrup_dummy,dfcor$Deseo_prexfact, col="#008600")
+testobj <- roc.test(Predictor1, Predictor2)
+text(.5, .5, labels=paste("p-value =", format.pval(testobj$p.value)), adj=c(0, .5))
+legend("bottomright", legend=c("FSFI", "DESEO"), col=c("#1c61b6", "#008600"), lwd=2)
